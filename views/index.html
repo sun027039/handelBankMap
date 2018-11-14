@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link href="/favicon.ico" rel="icon" type="image/x-icon">
+    <style>
+        html,
+        body,
+        #container {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+        .position-select{
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        #placeSelect{
+            height: 30px;
+            line-height: 30px;
+            font-size: 16px;
+            width: 150px;
+        }
+        .loader-box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        .loader {
+            background: currentcolor;
+            position: absolute;
+            -webkit-animation: loader 1s ease-in-out infinite;
+            animation: loader 1s ease-in-out infinite;
+            -webkit-animation-delay: 0.4s;
+            animation-delay: 0.4s;
+            width: .25em;
+            height: .5em;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            color: #fff;
+            font-size: 30px;
+        }
+        .loader:after,
+        .loader:before {
+            content: '';
+            position: absolute;
+            width: inherit;
+            height: inherit;
+            background: inherit;
+            -webkit-animation: inherit;
+            animation: inherit;
+        }
+        .loader:before {
+            right: .5em;
+            -webkit-animation-delay: 0.2s;
+            animation-delay: 0.2s;
+        }
+        .loader:after {
+            left: .5em;
+            -webkit-animation-delay: 0.6s;
+            animation-delay: 0.6s;
+        }
+        @-webkit-keyframes loader {
+            0%, 100% {
+                box-shadow: 0 0 0 currentcolor, 0 0 0 currentcolor;
+            }
+            50% {
+                box-shadow: 0 -.25em 0 currentcolor, 0 .25em 0 currentcolor;
+            }
+        }
+        @keyframes loader {
+            0%, 100% {
+                box-shadow: 0 0 0 currentcolor, 0 0 0 currentcolor;
+            }
+            50% {
+                box-shadow: 0 -.25em 0 currentcolor, 0 .25em 0 currentcolor;
+            }
+        }
+    </style>
+    <title><%=title%></title>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="position-select">
+        <select id="placeSelect">
+        <%for(let i = 0,l = options.length; i < l; i++){%>
+            <option value="<%=options[i].key%>"><%=options[i].value%></option>
+        <%}%>
+        </select>
+    </div>
+    <div class="loader-box">
+        <div class="loader"></div>
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src='//webapi.amap.com/maps?v=1.4.10&key=ba8cee88466feee5a1578ecc36ed1ed5'></script>
+    <!-- UI组件库 1.0 -->
+    <script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script type="text/javascript">
+        var map,poitnData,infoWindow
+        window.onload = function () {
+            intMap()
+            intMapPoitn()
+            document.getElementById('placeSelect').addEventListener('change', function () {
+                var _this = this
+                document.querySelector('.loader-box').style.display = 'block'
+                axios.get('/gz/getHandleBank',{
+                    params: { code: _this.value }
+                }).then(function(data) {
+                    poitnData = data.data.data
+                    document.querySelector('.loader-box').style.display = 'none'
+                    intMapPoitn()
+                })
+            }, false)
+        }
+        function intMapPoitn () {
+            map.clearMap()
+            for (let i in poitnData) {
+                let point = poitnData[i].lnObj.location.split(',')
+                var marker = new AMap.Marker({
+                    position: point,
+                    extData: poitnData[i]
+                })
+                map.add(marker)
+                marker.on('click',function(e){
+                    let data = e.target.getExtData()
+                    let content = `<p>银行：${data.name}</p>
+                                <p>地址：${data.address}</p>`
+                    infoWindow.setContent(content)
+                    infoWindow.open(map, e.target.getPosition())
+                })
+            }
+        }
+        function intMap () {
+            window.map = new AMap.Map('container', {
+                zoom: 11
+            })
+            window.poitnData = <%-data%>
+            window.infoWindow = new AMap.InfoWindow({
+                content: `<p>信息</p>`,
+                offset: new AMap.Pixel(16, -45)
+            })
+        }
+    </script>
+</body>
+</html>
+
+
